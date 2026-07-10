@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Representing Code — Field Notes on the jlox AST (Print Edition)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --panel:#F7F7F4;
+    --panel-2:#EEEEE8;
+    --code-bg:#F6F6F2;
+    --ink:#1B1B18;
+    --ink-dim:#52524C;
+    --ink-faint:#7A7A72;
+    --rule:#DEDED6;
+    --rule-strong:#C6C6BC;
+    --purple:#4C3A78;
+    --purple-soft:#EEEAF6;
+    --teal:#1F6F5C;
+    --teal-soft:#E5F1EC;
+    --coral:#A14F2B;
+    --coral-soft:#F6E8E1;
+    --amber:#8A6D1F;
+    --amber-soft:#F4EFDC;
+    --gray:#5A5A53;
+    --gray-soft:#ECECE7;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.65;
+    font-size:15.5px;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+    color-adjust:exact;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--teal); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* ---------- top nav ---------- */
+  .topnav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,0.94);
+    border-bottom:1px solid var(--rule-strong);
+    padding:14px 24px;
+    display:flex; gap:18px; align-items:center;
+    overflow-x:auto; white-space:nowrap;
+  }
+  .topnav .brand{font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink); font-size:0.85rem; letter-spacing:0.02em; flex-shrink:0;}
+  .topnav .links{display:flex; gap:16px; font-size:0.8rem;}
+  .topnav .links a{color:var(--ink-dim); font-family:'IBM Plex Mono',monospace;}
+  .topnav .links a:hover{color:var(--teal); text-decoration:none;}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:56px 24px 36px; text-align:center; border-bottom:1px solid var(--rule);}
+  .hero .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:0.72rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber); margin-bottom:16px;}
+  .hero h1{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:clamp(1.6rem,4.2vw,2.4rem); margin:0 0 14px; color:var(--ink); line-height:1.25;}
+  .hero p.sub{color:var(--ink-dim); max-width:560px; margin:0 auto 32px; font-size:1rem;}
+  .hero-expr{font-family:'IBM Plex Mono',monospace; font-size:clamp(1.05rem,3.2vw,1.6rem); font-weight:600; margin:0 auto 16px; word-break:break-word;}
+  .hero-expr .p-bin{color:var(--purple);}
+  .hero-expr .p-un{color:var(--teal);}
+  .hero-expr .p-grp{color:var(--coral);}
+  .hero-decode{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:10px;}
+  .chip{font-family:'IBM Plex Mono',monospace; font-size:0.72rem; padding:5px 10px; border-radius:20px; border:1px solid var(--rule-strong); background:var(--panel);}
+  .chip.bin{color:var(--purple); border-color:#C9BFE3;}
+  .chip.un{color:var(--teal); border-color:#B9DACE;}
+  .chip.grp{color:var(--coral); border-color:#E3C2AC;}
+  .hero-note{margin-top:20px; color:var(--ink-faint); font-size:0.85rem; max-width:520px; margin-inline:auto;}
+
+  /* ---------- roadmap ---------- */
+  .roadmap{padding:44px 24px; border-bottom:1px solid var(--rule);}
+  .roadmap h2{margin-top:0; font-family:'IBM Plex Mono',monospace; font-size:1.15rem; color:var(--ink);}
+  .blocks{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:22px;}
+  .block-card{background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:14px 14px 16px;}
+  .block-card .num{font-family:'IBM Plex Mono',monospace; color:var(--amber); font-size:0.75rem; font-weight:700;}
+  .block-card .ti{font-weight:600; margin-top:4px; font-size:0.9rem; color:var(--ink);}
+  .block-card .de{color:var(--ink-faint); font-size:0.76rem; margin-top:3px;}
+
+  /* ---------- generic section ---------- */
+  section.sec{padding:50px 24px; border-bottom:1px solid var(--rule);}
+  section.sec:last-of-type{border-bottom:none;}
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:6px;}
+  .sec-head .idx{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); font-size:0.9rem;}
+  .sec h2{font-family:'IBM Plex Mono',monospace; font-size:1.32rem; margin:0; color:var(--ink);}
+  .sec .lede{color:var(--ink-dim); margin-top:6px; margin-bottom:26px; font-size:0.95rem;}
+  .sec h3{font-size:1.01rem; margin:28px 0 10px; color:var(--ink);}
+  .sec p{color:var(--ink-dim);}
+
+  table.ep{width:100%; border-collapse:collapse; margin:16px 0; font-size:0.87rem;}
+  table.ep th, table.ep td{border:1px solid var(--rule-strong); padding:9px 11px; text-align:left;}
+  table.ep th{background:var(--panel-2); font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink);}
+  table.ep td{color:var(--ink-dim);}
+
+  pre{
+    background:var(--code-bg); border:1px solid var(--rule-strong); border-radius:7px;
+    padding:15px 17px; overflow-x:auto; font-size:0.82rem; line-height:1.55;
+    font-family:'IBM Plex Mono',monospace; color:var(--ink); break-inside:avoid;
+  }
+  pre .c1{color:var(--purple); font-weight:600;}
+  pre .c2{color:var(--teal); font-weight:600;}
+  pre .c3{color:var(--coral); font-weight:600;}
+  pre .c4{color:var(--amber); font-weight:600;}
+  pre .dim{color:var(--ink-faint);}
+  code{font-family:'IBM Plex Mono',monospace; background:rgba(0,0,0,0.06); padding:2px 5px; border-radius:4px; font-size:0.88em; color:var(--ink);}
+
+  .callout{
+    border-left:3px solid var(--amber); background:var(--amber-soft);
+    padding:13px 17px; border-radius:0 7px 7px 0; margin:18px 0; font-size:0.9rem; color:var(--ink-dim);
+    break-inside:avoid;
+  }
+  .callout strong{color:var(--ink);}
+
+  .type-pill{font-family:'IBM Plex Mono',monospace; font-size:0.76rem; padding:2px 8px; border-radius:5px; font-weight:600;}
+  .pill-bin{background:var(--purple-soft); color:var(--purple);}
+  .pill-un{background:var(--teal-soft); color:var(--teal);}
+  .pill-grp{background:var(--coral-soft); color:var(--coral);}
+  .pill-lit{background:var(--gray-soft); color:var(--gray);}
+
+  /* ---------- Q&A cards ---------- */
+  .qa{margin-bottom:22px; background:var(--panel); border:1px solid var(--rule); border-radius:8px; overflow:hidden; break-inside:avoid;}
+  .qa .q{padding:14px 18px; background:var(--panel-2); font-weight:600; font-size:0.92rem; display:flex; gap:12px; align-items:flex-start; color:var(--ink);}
+  .qa .q .tag{font-family:'IBM Plex Mono',monospace; color:var(--amber); flex-shrink:0; font-size:0.82rem;}
+  .qa .a{padding:16px 18px; font-size:0.9rem; color:var(--ink-dim);}
+  .qa .a p{margin:0 0 11px;}
+  .qa .a p:last-child{margin-bottom:0;}
+  .qa .a code{color:var(--teal);}
+
+  /* ---------- stack trace ---------- */
+  .stack-wrap{background:var(--code-bg); border:1px solid var(--rule-strong); border-radius:8px; padding:22px 18px 22px 0; overflow-x:auto; margin:22px 0; break-inside:avoid;}
+  .frame{display:flex; align-items:flex-start; font-family:'IBM Plex Mono',monospace; font-size:0.79rem; white-space:nowrap; padding:3px 0;}
+  .frame .depth{width:30px; text-align:right; color:var(--ink-faint); flex-shrink:0; padding-right:10px; font-size:0.72rem;}
+  .frame .rail{flex-shrink:0; display:flex;}
+  .frame .seg{width:18px; border-right:1px solid var(--rule-strong); flex-shrink:0;}
+  .frame .seg.active{border-right:1px solid var(--amber);}
+  .frame .body{padding-left:10px; color:var(--ink);}
+  .frame.base .body{color:var(--amber); font-weight:700;}
+  .frame .ret{color:var(--ink-faint); font-style:italic;}
+  .frame .fn-print{color:var(--ink);}
+  .frame .fn-accept{color:var(--gray);}
+  .frame .fn-visit{color:var(--purple); font-weight:600;}
+  .frame .fn-visit.un{color:var(--teal); font-weight:600;}
+  .frame .fn-visit.grp{color:var(--coral); font-weight:600;}
+  .frame .fn-par{color:#2D4A6B; font-weight:600;}
+  .frame .dim{color:var(--ink-faint);}
+
+  .stack-legend{display:flex; gap:16px; flex-wrap:wrap; margin-top:14px; font-size:0.76rem; color:var(--ink-dim);}
+  .stack-legend span{display:inline-flex; align-items:center; gap:6px;}
+  .dot{width:8px; height:8px; border-radius:50%; display:inline-block;}
+
+  /* ---------- diagrams ---------- */
+  .diagram-box{background:var(--panel); border:1px solid var(--rule); border-radius:8px; padding:18px; margin:22px 0; break-inside:avoid;}
+  .diagram-box svg{width:100%; height:auto; display:block;}
+  figcaption{color:var(--ink-faint); font-size:0.8rem; text-align:center; margin-top:10px;}
+
+  /* ---------- corpus appendix ---------- */
+  .corpus{background:var(--code-bg); border:1px solid var(--rule-strong); border-radius:7px; padding:14px 16px; font-family:'IBM Plex Mono',monospace; font-size:0.76rem; color:var(--ink-dim); white-space:pre-wrap; line-height:1.55; margin:12px 0 26px; break-inside:avoid;}
+  .corpus-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber); font-size:0.83rem; margin-top:26px;}
+
+  footer{padding:42px 24px 56px; text-align:center; color:var(--ink-faint); font-size:0.84rem;}
+  footer .mono{color:var(--ink-dim);}
+
+  @media print{
+    .topnav{display:none;}
+    body{font-size:11pt;}
+    a{color:var(--ink); text-decoration:underline;}
+    .hero{padding-top:0;}
+    section.sec, .roadmap{padding:28px 0;}
+    .wrap{padding:0;}
+    @page{margin:0.7in;}
+  }
+
+  @media (max-width:600px){
+    .hero{padding:44px 16px 28px;}
+    section.sec{padding:36px 16px;}
+    .frame{font-size:0.7rem;}
+    .frame .seg{width:12px;}
+    .frame .depth{width:22px;}
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">jlox · ch.5</span>
+  <div class="links">
+    <a href="#grammar">grammar</a>
+    <a href="#hierarchy">classes</a>
+    <a href="#visitor">visitor</a>
+    <a href="#printer">printer</a>
+    <a href="#qa">deep dive</a>
+    <a href="#stack">the trace</a>
+    <a href="#diagrams">diagrams</a>
+    <a href="#corpus">corpus</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Crafting Interpreters · Chapter 5</div>
+  <h1>Representing Code —<br>Field Notes on the jlox AST</h1>
+  <p class="sub">Everything built, asked, and traced while turning Lox's grammar into a working syntax tree — the classes, the Visitor pattern, and the recursion underneath it all.</p>
+
+  <div class="hero-expr">
+    <span class="p-bin">(*</span> <span class="p-un">(- 123)</span> <span class="p-grp">(group 45.67)</span><span class="p-bin">)</span>
+  </div>
+  <div class="hero-decode">
+    <span class="chip bin">( * … ) → Binary, the root</span>
+    <span class="chip un">( - 123 ) → Unary, left operand</span>
+    <span class="chip grp">( group 45.67 ) → Grouping, right operand</span>
+  </div>
+  <p class="hero-note">This is the output of <code>AstPrinter</code> on the tree for <code>-123 * (45.67)</code>. Every opening paren marks a new node; the symbol right after it says which kind. No precedence ambiguity is possible — the nesting <em>is</em> the structure.</p>
+</header>
+
+<section class="roadmap wrap">
+  <h2>The six blocks of this chapter</h2>
+  <div class="blocks">
+    <div class="block-card"><div class="num">01</div><div class="ti">Grammar notation</div><div class="de">CFGs, terminals, nonterminals</div></div>
+    <div class="block-card"><div class="num">02</div><div class="ti">Lox's grammar</div><div class="de">literal · unary · binary · grouping</div></div>
+    <div class="block-card"><div class="num">03</div><div class="ti">Expr hierarchy</div><div class="de">disoriented objects, abstract Expr</div></div>
+    <div class="block-card"><div class="num">04</div><div class="ti">GenerateAst.java</div><div class="de">metaprogramming the boilerplate</div></div>
+    <div class="block-card"><div class="num">05</div><div class="ti">Visitor pattern</div><div class="de">the Expression Problem, accept()</div></div>
+    <div class="block-card"><div class="num">06</div><div class="ti">AstPrinter</div><div class="de">first working visitor, real output</div></div>
+  </div>
+</section>
+
+<section class="sec wrap" id="grammar">
+  <div class="sec-head"><span class="idx">01–02</span><h2>The Grammar</h2></div>
+  <p class="lede">Why expressions need a stronger formalism than the Scanner's, and what Lox's actual expression grammar looks like.</p>
+
+  <p>Regular grammars (the Scanner's level) can recognize patterns but can't <em>count</em> — they have no way to track arbitrary nesting depth. Expressions nest without bound (<code>((((1))))</code>), so they need a <strong>context-free grammar</strong>: a set of named rules (<em>productions</em>) made of <em>terminals</em> (literal tokens) and <em>nonterminals</em> (references to other rules). A rule referencing itself is what makes infinite nesting possible from a finite set of rules.</p>
+
+  <pre><span class="dim">expression</span> → literal | unary | binary | grouping ;
+<span class="dim">literal</span>    → NUMBER | STRING | "true" | "false" | "nil" ;
+<span class="dim">grouping</span>   → "(" expression ")" ;
+<span class="dim">unary</span>      → ( "-" | "!" ) expression ;
+<span class="dim">binary</span>     → expression operator expression ;
+<span class="dim">operator</span>  → "==" | "!=" | "&lt;" | "&lt;=" | "&gt;" | "&gt;="
+            | "+"  | "-"  | "*" | "/" ;</pre>
+
+  <div class="callout"><strong>Known issue, deliberately left in:</strong> <code>binary</code>'s rule encodes no precedence or associativity. <code>6 / 3 - 1</code> is genuinely ambiguous as written — it could mean <code>(6/3)-1</code> or <code>6/(3-1)</code>. Fixing that is Chapter 6's job, by stratifying this one rule into a cascade of precedence levels.</div>
+</section>
+
+<section class="sec wrap" id="hierarchy">
+  <div class="sec-head"><span class="idx">03</span><h2>The Expr Class Hierarchy</h2></div>
+  <p class="lede">Turning the grammar into Java — and why these classes hold no behavior at all.</p>
+
+  <h3>Why one class per production, not one generic node</h3>
+  <p>A single <code>Expression</code> class with a generic list of children would work, but throws away type safety. Instead: one abstract base (<span class="type-pill pill-bin">Expr</span>), one subclass per production (<span class="type-pill pill-bin">Binary</span>, <span class="type-pill pill-grp">Grouping</span>, <span class="type-pill pill-lit">Literal</span>, <span class="type-pill pill-un">Unary</span>), each with only the fields it needs. The compiler itself then catches mistakes — there's no second operand to mistakenly read off a <span class="type-pill pill-un">Unary</span>, because the field doesn't exist.</p>
+
+  <h3>"Disoriented objects" — why no methods live here</h3>
+  <p><code>Expr</code> is built by the Parser and consumed by the Interpreter (and later, a Resolver). It doesn't belong to either domain, so it holds <strong>no behavior</strong> — pure data, existing only to let those phases communicate. This is a deliberately functional-style choice, borrowed into an otherwise object-oriented codebase.</p>
+
+  <pre>abstract class Expr {
+  static class Binary extends Expr {
+    Binary(Expr left, Token operator, Expr right) {
+      this.left = left;
+      this.operator = operator;
+      this.right = right;
+    }
+    final Expr left;
+    final Token operator;
+    final Expr right;
+  }
+  <span class="dim">// Grouping, Literal, Unary follow the same shape...</span>
+}</pre>
+
+  <h3>final fields — and why it matters more here than for Token</h3>
+  <p>One tree gets read by multiple independent consumers over its lifetime — the Interpreter today, a Resolver later. If any reader could mutate a node mid-walk, every other consumer's view of the program's structure could shift underneath it. <code>final</code> makes that bug class structurally impossible. Same principle as <code>Token</code>: <em>tokens are facts about the past; Expr nodes are facts about the program's structure — neither should change once built.</em></p>
+
+  <h3>abstract, precisely</h3>
+  <p><code>abstract class Expr</code> blocks <code>new Expr()</code> directly — there's no such thing as a bare expression, only a specific kind. Once <code>accept()</code> is added (next section), <code>abstract</code> does its second job too: forcing every subclass to implement it, or fail to compile.</p>
+</section>
+
+<section class="sec wrap" id="generator">
+  <div class="sec-head"><span class="idx">04</span><h2>GenerateAst.java</h2></div>
+  <p class="lede">A build-time tool, not part of jlox itself — it writes Expr.java for us.</p>
+  <p>Each tree type collapses into one string: <code>"Binary : Expr left, Token operator, Expr right"</code>. The script splits on <code>:</code> for the class name vs. fields, then <code>, </code> for individual fields, and mechanically emits a full nested class — constructor, field assignments, field declarations — for each one. <code>baseName</code> is a parameter, not hardcoded, because this exact script gets reused later to generate <code>Stmt.java</code> too.</p>
+  <div class="callout"><strong>Fix the generator, not the output.</strong> Every bug found in <code>Expr.java</code> (capitalized field names, a missing semicolon) was fixed in <code>GenerateAst.java</code> and regenerated — editing the generated file directly would just get silently overwritten on the next run.</div>
+</section>
+
+<section class="sec wrap" id="visitor">
+  <div class="sec-head"><span class="idx">05</span><h2>The Visitor Pattern</h2></div>
+  <p class="lede">How to attach behavior to classes that deliberately hold none.</p>
+
+  <h3>The Expression Problem</h3>
+  <p>Every operation-on-every-type is a cell in a table — rows are types, columns are operations:</p>
+  <table class="ep">
+    <tr><th></th><th>print()</th><th>interpret()</th><th>resolve() <em>(later)</em></th></tr>
+    <tr><td><span class="type-pill pill-bin">Binary</span></td><td>code</td><td>code</td><td>code</td></tr>
+    <tr><td><span class="type-pill pill-grp">Grouping</span></td><td>code</td><td>code</td><td>code</td></tr>
+    <tr><td><span class="type-pill pill-lit">Literal</span></td><td>code</td><td>code</td><td>code</td></tr>
+    <tr><td><span class="type-pill pill-un">Unary</span></td><td>code</td><td>code</td><td>code</td></tr>
+  </table>
+  <p>OOP's grain bundles by <em>row</em> (a class, with methods) — easy to add types, hard to add operations. Functional pattern-matching bundles by <em>column</em> — the opposite tradeoff. Lox's trees need more <em>operations</em> over time far more often than more <em>types</em> — so the Visitor pattern is used specifically to fake the functional, column-oriented grain inside Java.</p>
+
+  <h3>The mechanism — accept() + Visitor&lt;R&gt;</h3>
+  <pre><span class="c1">interface</span> Visitor&lt;R&gt; {
+  R visitBinaryExpr(Binary expr);
+  R visitGroupingExpr(Grouping expr);
+  R visitLiteralExpr(Literal expr);
+  R visitUnaryExpr(Unary expr);
+}
+
+<span class="dim">// inside Expr.Binary:</span>
+&lt;R&gt; R accept(Visitor&lt;R&gt; visitor) {
+  <span class="c1">return</span> visitor.visitBinaryExpr(<span class="c4">this</span>);
+}</pre>
+  <p><code>expr.accept(visitor)</code> resolves in two genuinely different stages:</p>
+  <table class="ep">
+    <tr><th>Stage 1 — real, runtime</th><th>Stage 2 — fixed, compile-time</th></tr>
+    <tr><td>The JVM follows <code>expr</code>'s actual class (via a hidden reference every object carries) to find <em>which subclass's</em> <code>accept()</code> runs.</td><td>That subclass's <code>accept()</code> body calls one <em>specific, hardcoded</em> visit method name — baked in permanently when <code>GenerateAst.java</code> wrote the file.</td></tr>
+  </table>
+  <p>Distinct method names (<code>visitBinaryExpr</code>, not an overloaded <code>visit(Binary)</code>) make it unmistakable that polymorphism — not overload resolution — does the routing.</p>
+
+  <h3>Why &lt;R&gt; is generic</h3>
+  <p><code>AstPrinter</code> wants <code>String</code> back. The future <code>Interpreter</code> will want <code>Object</code>. <code>Visitor&lt;R&gt;</code> fixes <code>R</code> once, the moment a class <code>implements</code> it. <code>accept&lt;R&gt;</code> re-resolves <code>R</code> fresh at every call site, based on whichever visitor is actually passed in — letting one <code>accept()</code>, written once, correctly serve every visitor that will ever exist.</p>
+</section>
+
+<section class="sec wrap" id="printer">
+  <div class="sec-head"><span class="idx">06</span><h2>AstPrinter</h2></div>
+  <p class="lede">The first real Visitor — proof the whole mechanism actually works.</p>
+  <pre><span class="c1">class</span> AstPrinter <span class="c1">implements</span> Expr.Visitor&lt;String&gt; {
+  String print(Expr expr) { <span class="c1">return</span> expr.accept(<span class="c4">this</span>); }
+
+  <span class="c1">public</span> String visitBinaryExpr(Expr.Binary expr) {
+    <span class="c1">return</span> parenthesize(expr.operator.lexeme, expr.left, expr.right);
+  }
+  <span class="c1">public</span> String visitGroupingExpr(Expr.Grouping expr) {
+    <span class="c1">return</span> parenthesize(<span class="c2">"group"</span>, expr.expression);
+  }
+  <span class="c1">public</span> String visitLiteralExpr(Expr.Literal expr) {
+    <span class="c1">if</span> (expr.value == <span class="c4">null</span>) <span class="c1">return</span> <span class="c2">"nil"</span>;
+    <span class="c1">return</span> expr.value.toString();
+  }
+  <span class="c1">public</span> String visitUnaryExpr(Expr.Unary expr) {
+    <span class="c1">return</span> parenthesize(expr.operator.lexeme, expr.right);
+  }
+
+  <span class="dim">private String parenthesize(String name, Expr... exprs) { ... }</span>
+}</pre>
+  <p>Test input — built by hand, since the Parser doesn't exist yet:</p>
+  <pre>Expr expression = <span class="c1">new</span> Expr.Binary(
+    <span class="c1">new</span> Expr.Unary(<span class="dim">minusToken</span>, <span class="c1">new</span> Expr.Literal(123)),
+    <span class="dim">starToken</span>,
+    <span class="c1">new</span> Expr.Grouping(<span class="c1">new</span> Expr.Literal(45.67)));
+
+System.out.println(<span class="c1">new</span> AstPrinter().print(expression));
+<span class="dim">// → (* (- 123) (group 45.67))</span></pre>
+</section>
+
+<section class="sec wrap" id="qa">
+  <div class="sec-head"><span class="idx">deep dive</span><h2>The Questions That Actually Mattered</h2></div>
+  <p class="lede">Once the code compiled and ran, the real question was: what is actually happening when this runs?</p>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·1</span> Is <code>scanToken()</code> / is this tree-walk recursive?</div>
+    <div class="a">
+      <p>Scanning never was — <code>scanTokens()</code>'s while-loop is plain iteration, and the comment-skipping loop only calls <code>advance()</code>/<code>peek()</code>, never itself. Lexemes don't nest, so nothing in the Scanner needed real recursion.</p>
+      <p>This tree, by contrast, is genuinely recursive — just <strong>indirectly</strong> (mutual recursion): <code>parenthesize()</code> never calls itself by name, but it calls <code>accept()</code>, which calls a <code>visit*Expr()</code>, which — for anything except a Literal — calls <code>parenthesize()</code> again. The cycle closes through three hops instead of one.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·2</span> What does "the visitor" actually refer to?</div>
+    <div class="a">
+      <p>One concrete object — a single <code>AstPrinter</code> instance, created exactly once (<code>new AstPrinter()</code>) — that gets handed, unchanged, to every <code>accept()</code> call across the entire tree. It's a <em>roving</em> piece: the tree's nodes are fixed and separate (<code>final</code> fields, built once); the visitor is the one thing that travels through all of them, deciding what to do at each stop.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·3</span> How does <code>expr.operator.lexeme</code> resolve?</div>
+    <div class="a">
+      <p>Plain left-to-right chained field access, nothing more. <code>expr.operator</code> reads the <code>Token</code> field off the <code>Binary</code> node; <code>.lexeme</code> then reads the <code>String</code> field off <em>that</em> Token. It compiles without a getter only because <code>lexeme</code> was declared package-private back in <code>Token.java</code>, and <code>AstPrinter</code> lives in the same package.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·4</span> Where does left vs. right actually get separated in code?</div>
+    <div class="a">
+      <p>Two different moments, not one. <strong>Structurally</strong>, the separation is permanent the instant <code>Binary</code>'s constructor runs — two distinct, named, <code>final</code> fields. <strong>Procedurally</strong>, the order they get <em>visited</em> in is just whatever order they're written in <code>visitBinaryExpr</code>'s one line: <code>parenthesize(op, expr.left, expr.right)</code>. Varargs pack them into an array in exactly that order; the loop walks the array start to end. Swap that line's argument order, and the tree doesn't change — only the reading order does.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·5</span> What does the parenthesized output actually mean?</div>
+    <div class="a">
+      <p>It's not Lox syntax and nothing has been evaluated — it's a structural X-ray. The position of each paren directly reveals the tree's real shape: the symbol right after <code>(</code> says what kind of node it is, and everything up to the matching <code>)</code> is exactly that node's operand(s). No precedence has to be "remembered" while reading it — the nesting <em>is</em> the precedence, made visible. This becomes the actual debugging tool once the Parser exists: feed it real Lox, and misplaced parens in the output reveal precedence bugs instantly.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·6</span> Two different "this" — how does <code>visitor.visitBinaryExpr(this)</code> actually resolve?</div>
+    <div class="a">
+      <p>There are genuinely two separate <code>this</code> values in play, in two different files. Inside <code>AstPrinter</code>'s own methods, <code>this</code> means the <code>AstPrinter</code>. Inside <code>Expr.Binary</code>'s <code>accept()</code>, <code>this</code> means the <code>Binary</code> node — a completely different object — and the visitor is received there under a different name entirely: <code>visitor</code>. The line reads: <em>"call visitBinaryExpr on the visitor I was handed, passing myself in."</em></p>
+      <p>Picking <em>which</em> <code>accept()</code> runs is real, runtime polymorphism (the JVM follows a hidden class-reference every object carries). Picking <em>which</em> visit method that <code>accept()</code> calls is not dynamic at all — it's a fixed string, baked into the file once by <code>GenerateAst.java</code>.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·7</span> Is this DFS? And what kind, precisely?</div>
+    <div class="a">
+      <p>Yes, by necessity — a call can't return before everything it called has returned, so there's no way to get breadth-first behavior out of plain recursion like this. More precisely: <strong>dispatch is pre-order</strong> (a parent's <code>visit*Expr</code> is entered before its children's), but <strong>value-completion is post-order</strong> (a parent can't finish building its string until both children have already finished theirs). Binary is visited first, but it's the last one to actually finish.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·8</span> What is <code>expression</code>, really — an analogy?</div>
+    <div class="a">
+      <p>It's a reference to exactly one object — the root node — nothing more. The "tree" isn't a bundled container; it's a web of separate objects holding references to each other, reachable only by walking outward from that one root. The closest real analogy is a linked list, generalized: instead of one anonymous <code>next</code> per node, each <code>Expr</code> subclass has its own specific, named outgoing references (<code>left</code>/<code>right</code>, or just <code>right</code>, or none at all for a Literal).</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec wrap" id="stack">
+  <div class="sec-head"><span class="idx">the trace</span><h2>One Call, Start to Finish</h2></div>
+  <p class="lede"><code>new AstPrinter().print(expression)</code> — every frame, tracked by depth, until it terminates.</p>
+
+  <div class="stack-wrap">
+    <div class="frame" style="padding-left:10px;"><span class="depth">0</span><span class="body">main(): <span class="fn-print">new AstPrinter().print(expression)</span></span></div>
+    <div class="frame"><span class="depth">1</span><span class="rail"><span class="seg active"></span></span><span class="body"><span class="fn-print">print</span>(Binary-Root)</span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-accept">Binary-Root.accept(P)</span></span></div>
+    <div class="frame"><span class="depth">3</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">P.<span class="fn-visit">visitBinaryExpr</span>(Binary-Root)</span></div>
+    <div class="frame"><span class="depth">4</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-par">parenthesize</span>("*", Unary-X, Grouping-Y)</span></div>
+    <div class="frame"><span class="depth">5</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-accept">Unary-X.accept(P)</span></span></div>
+    <div class="frame"><span class="depth">6</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">P.<span class="fn-visit un">visitUnaryExpr</span>(Unary-X)</span></div>
+    <div class="frame"><span class="depth">7</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-par">parenthesize</span>("-", Literal-A)</span></div>
+    <div class="frame"><span class="depth">8</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-accept">Literal-A.accept(P)</span></span></div>
+    <div class="frame base"><span class="depth">9</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">P.visitLiteralExpr(Literal-A) <span class="ret">→ "123"  (base case)</span></span></div>
+    <div class="frame"><span class="depth">·</span><span class="body dim" style="padding-left:30px;">↑ unwinds: "123" → "(- 123)" → returns to outer parenthesize, builder = "(* (- 123)"</span></div>
+    <div class="frame"><span class="depth">5</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-accept">Grouping-Y.accept(P)</span> <span class="dim">— loop item 2</span></span></div>
+    <div class="frame"><span class="depth">6</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">P.<span class="fn-visit grp">visitGroupingExpr</span>(Grouping-Y)</span></div>
+    <div class="frame"><span class="depth">7</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-par">parenthesize</span>("group", Literal-B)</span></div>
+    <div class="frame"><span class="depth">8</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-accept">Literal-B.accept(P)</span></span></div>
+    <div class="frame base"><span class="depth">9</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">P.visitLiteralExpr(Literal-B) <span class="ret">→ "45.67"  (base case)</span></span></div>
+    <div class="frame"><span class="depth">0</span><span class="body dim" style="padding-left:10px;">↑ full unwind → "(* (- 123) (group 45.67))" → println()</span></div>
+  </div>
+
+  <div class="stack-legend">
+    <span><span class="dot" style="background:var(--ink);"></span>print / entry</span>
+    <span><span class="dot" style="background:var(--gray);"></span>accept (dispatch)</span>
+    <span><span class="dot" style="background:var(--purple);"></span>visitBinaryExpr</span>
+    <span><span class="dot" style="background:var(--teal);"></span>visitUnaryExpr</span>
+    <span><span class="dot" style="background:var(--coral);"></span>visitGroupingExpr</span>
+    <span><span class="dot" style="background:var(--amber);"></span>base case (Literal)</span>
+  </div>
+
+  <div class="callout">
+    <strong>Max depth: 9.</strong> Exactly <code>2 × levels − 1</code>, since every level costs two frames (<code>accept()</code> then <code>visit*Expr()</code>) before recursing further or hitting a Literal. Termination is guaranteed because <code>Expr</code> describes a tree — no cycles are possible, since every field was built <em>before</em> the node holding it, and a cycle would require pointing back to something that doesn't exist yet.
+  </div>
+</section>
+
+<section class="sec wrap" id="diagrams">
+  <div class="sec-head"><span class="idx">diagrams</span><h2>The Tree, Two Ways</h2></div>
+  <p class="lede">Same five nodes — first by structure, then by call order.</p>
+
+  <figure class="diagram-box">
+    <svg viewBox="0 0 680 376" role="img" aria-label="Tree structure diagram">
+      <defs><marker id="arrow1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A8A80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      <line x1="340" y1="96" x2="150" y2="170" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow1)"/>
+      <line x1="340" y1="96" x2="550" y2="170" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow1)"/>
+      <line x1="150" y1="226" x2="150" y2="300" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow1)"/>
+      <line x1="550" y1="226" x2="550" y2="300" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow1)"/>
+      <text x="225" y="122" text-anchor="middle" fill="#6B6B63" font-family="IBM Plex Mono" font-size="12">left</text>
+      <text x="465" y="122" text-anchor="middle" fill="#6B6B63" font-family="IBM Plex Mono" font-size="12">right</text>
+      <text x="168" y="266" fill="#6B6B63" font-family="IBM Plex Mono" font-size="12">right</text>
+      <text x="560" y="266" fill="#6B6B63" font-family="IBM Plex Mono" font-size="12">expression</text>
+
+      <g><rect x="260" y="40" width="160" height="56" rx="8" fill="#EEEAF6" stroke="#4C3A78" stroke-width="1.2"/>
+      <text x="340" y="58" text-anchor="middle" fill="#4C3A78" font-family="IBM Plex Mono" font-weight="700" font-size="14">Binary</text>
+      <text x="340" y="76" text-anchor="middle" fill="#4C3A78" font-family="IBM Plex Mono" font-size="11">operator: *</text></g>
+
+      <g><rect x="70" y="170" width="160" height="56" rx="8" fill="#E5F1EC" stroke="#1F6F5C" stroke-width="1.2"/>
+      <text x="150" y="188" text-anchor="middle" fill="#1F6F5C" font-family="IBM Plex Mono" font-weight="700" font-size="14">Unary</text>
+      <text x="150" y="206" text-anchor="middle" fill="#1F6F5C" font-family="IBM Plex Mono" font-size="11">operator: -</text></g>
+
+      <g><rect x="470" y="170" width="160" height="56" rx="8" fill="#F6E8E1" stroke="#A14F2B" stroke-width="1.2"/>
+      <text x="550" y="188" text-anchor="middle" fill="#A14F2B" font-family="IBM Plex Mono" font-weight="700" font-size="14">Grouping</text>
+      <text x="550" y="206" text-anchor="middle" fill="#A14F2B" font-family="IBM Plex Mono" font-size="11">( … )</text></g>
+
+      <g><rect x="70" y="300" width="160" height="56" rx="8" fill="#ECECE7" stroke="#5A5A53" stroke-width="1.2"/>
+      <text x="150" y="318" text-anchor="middle" fill="#5A5A53" font-family="IBM Plex Mono" font-weight="700" font-size="14">Literal</text>
+      <text x="150" y="336" text-anchor="middle" fill="#5A5A53" font-family="IBM Plex Mono" font-size="11">value: 123</text></g>
+
+      <g><rect x="470" y="300" width="160" height="56" rx="8" fill="#ECECE7" stroke="#5A5A53" stroke-width="1.2"/>
+      <text x="550" y="318" text-anchor="middle" fill="#5A5A53" font-family="IBM Plex Mono" font-weight="700" font-size="14">Literal</text>
+      <text x="550" y="336" text-anchor="middle" fill="#5A5A53" font-family="IBM Plex Mono" font-size="11">value: 45.67</text></g>
+    </svg>
+    <figcaption>Structural view — who holds a reference to whom, and via which named field.</figcaption>
+  </figure>
+
+  <figure class="diagram-box">
+    <svg viewBox="0 0 680 376" role="img" aria-label="Tree visit order diagram">
+      <defs><marker id="arrow2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8A8A80" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+      <line x1="340" y1="96" x2="150" y2="170" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow2)"/>
+      <line x1="340" y1="96" x2="550" y2="170" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow2)"/>
+      <line x1="150" y1="226" x2="150" y2="300" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow2)"/>
+      <line x1="550" y1="226" x2="550" y2="300" stroke="#8A8A80" stroke-width="1.2" marker-end="url(#arrow2)"/>
+
+      <g><rect x="260" y="40" width="160" height="56" rx="8" fill="#EEEAF6" stroke="#4C3A78" stroke-width="1.2"/>
+      <text x="340" y="58" text-anchor="middle" fill="#4C3A78" font-family="IBM Plex Mono" font-weight="700" font-size="14">Binary</text>
+      <text x="340" y="76" text-anchor="middle" fill="#4C3A78" font-family="IBM Plex Mono" font-size="11">1 · visitBinaryExpr</text></g>
+
+      <g><rect x="70" y="170" width="160" height="56" rx="8" fill="#E5F1EC" stroke="#1F6F5C" stroke-width="1.2"/>
+      <text x="150" y="188" text-anchor="middle" fill="#1F6F5C" font-family="IBM Plex Mono" font-weight="700" font-size="14">Unary</text>
+      <text x="150" y="206" text-anchor="middle" fill="#1F6F5C" font-family="IBM Plex Mono" font-size="11">2 · visitUnaryExpr</text></g>
+
+      <g><rect x="470" y="170" width="160" height="56" rx="8" fill="#F6E8E1" stroke="#A14F2B" stroke-width="1.2"/>
+      <text x="550" y="188" text-anchor="middle" fill="#A14F2B" font-family="IBM Plex Mono" font-weight="700" font-size="14">Grouping</text>
+      <text x="550" y="206" text-anchor="middle" fill="#A14F2B" font-family="IBM Plex Mono" font-size="11">4 · visitGroupingExpr</text></g>
+
+      <g><rect x="70" y="300" width="160" height="56" rx="8" fill="#F4EFDC" stroke="#8A6D1F" stroke-width="1.2"/>
+      <text x="150" y="318" text-anchor="middle" fill="#8A6D1F" font-family="IBM Plex Mono" font-weight="700" font-size="14">Literal</text>
+      <text x="150" y="336" text-anchor="middle" fill="#8A6D1F" font-family="IBM Plex Mono" font-size="11">3 · base → "123"</text></g>
+
+      <g><rect x="470" y="300" width="160" height="56" rx="8" fill="#F4EFDC" stroke="#8A6D1F" stroke-width="1.2"/>
+      <text x="550" y="318" text-anchor="middle" fill="#8A6D1F" font-family="IBM Plex Mono" font-weight="700" font-size="14">Literal</text>
+      <text x="550" y="336" text-anchor="middle" fill="#8A6D1F" font-family="IBM Plex Mono" font-size="11">5 · base → "45.67"</text></g>
+    </svg>
+    <figcaption>Call-order view — dispatch is pre-order (parent first); value-completion is post-order (children finish first).</figcaption>
+  </figure>
+</section>
+
+<section class="sec wrap" id="corpus">
+  <div class="sec-head"><span class="idx">appendix</span><h2>Notebook Corpus, Condensed</h2></div>
+  <p class="lede">The six handwritten blocks, for quick reference alongside the notebook itself.</p>
+
+  <div class="corpus-title">Block 1 — CFG Notation</div>
+  <div class="corpus">terminal = literal token, an "end point". nonterminal = named reference to another rule.
+Self-reference in a rule = how nesting becomes possible from finite rules.
+Notation: → defines, "quoted"=terminal, lowercase=nonterminal, | alternation,
+(...) grouping, * zero-or-more, + one-or-more, ? optional.</div>
+
+  <div class="corpus-title">Block 2 — Lox's Expression Grammar</div>
+  <div class="corpus">expression → literal | unary | binary | grouping ;
+grouping/unary are self-referential -> this is what allows nesting.
+binary's rule is ambiguous on precedence as written (fixed in Ch.6).</div>
+
+  <div class="corpus-title">Block 3 — The Expr Hierarchy</div>
+  <div class="corpus">One abstract Expr + one subclass per production (Binary/Grouping/Literal/Unary).
+"Disoriented objects": no methods, pure data -> Expr belongs to neither
+the Parser nor the Interpreter, so it can't naturally hold either's behavior.
+final fields: a tree, once built, must not change under its later readers.</div>
+
+  <div class="corpus-title">Block 4 — GenerateAst.java</div>
+  <div class="corpus">Build-time tool, separate package (.tool, not .lox). Mini-DSL string per type:
+"ClassName : type name, type name". baseName is a parameter so the same
+script can later generate Stmt.java too. Fix the GENERATOR, never the output.</div>
+
+  <div class="corpus-title">Block 5 — The Visitor Pattern</div>
+  <div class="corpus">The Expression Problem: types(rows) x operations(columns). OOP eases adding
+rows; functional eases adding columns. Visitor fakes the functional grain
+inside Java: Visitor&lt;R&gt; (one method per type) + Expr.accept(visitor) on
+each subclass, calling its own named visit method. Dispatch = polymorphism
+on accept() (real, runtime). WHICH visit method gets called = fixed,
+compile-time, baked in by the generator.</div>
+
+  <div class="corpus-title">Block 6 — AstPrinter</div>
+  <div class="corpus">First real Visitor&lt;String&gt;. print() = expr.accept(this) — "this" IS the
+visitor. parenthesize() is the recursive engine (mutual recursion via
+accept/visit*Expr), bottoming out at Literal (no subexpressions = base case).
+Output is a Lisp-style, fully-parenthesized X-ray of the tree's real shape —
+not Lox syntax, not a computed value. Used to visually verify the Parser's
+precedence handling once Chapter 6 exists.</div>
+</section>
+
+<footer>
+  <p>Chapter 5 — <span class="mono">Representing Code</span> — complete.</p>
+  <p>Next: Chapter 6, <span class="mono">Parsing Expressions</span> — where this same recursive shape reappears as <span class="mono">expression() → term() → factor() → primary()</span>, this time turning tokens into trees instead of trees into strings.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "editor.quickSuggestions": {
+    "other": false,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.parameterHints.enabled": false,
+  "editor.acceptSuggestionOnEnter": "on",
+  "editor.inlineSuggest.enabled": false,
+  "java.completion.enabled": true,
+  "java.signatureHelp.enabled": false,
+  "github.copilot.enable": {
+    "*": false
+  }
+}

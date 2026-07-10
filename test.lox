@@ -1,0 +1,17 @@
+!= == <= >=
+// this is a comment
+/
+"hello world"
+"oops"
+123456
+123.456
+
+HELLO
+null
+hi
+final
+var
+let
+const
+for
+Var
