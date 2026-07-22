@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapters 7 & 8 — Evaluating Expressions + Statements & State (Print Edition)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFFFFF;
+    --panel:#F7F7F4;
+    --panel-2:#EEEEE8;
+    --code-bg:#F6F6F2;
+    --ink:#1B1B18;
+    --ink-dim:#52524C;
+    --ink-faint:#7A7A72;
+    --rule:#DEDED6;
+    --rule-strong:#C6C6BC;
+    --purple:#4C3A78;
+    --purple-soft:#EEEAF6;
+    --teal:#1F6F5C;
+    --teal-soft:#E5F1EC;
+    --coral:#A14F2B;
+    --coral-soft:#F6E8E1;
+    --amber:#8A6D1F;
+    --amber-soft:#F4EFDC;
+    --gray:#5A5A53;
+    --gray-soft:#ECECE7;
+    --maxw:880px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    line-height:1.65;
+    font-size:15.5px;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+    color-adjust:exact;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  a{color:var(--teal); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  .topnav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,0.94);
+    border-bottom:1px solid var(--rule-strong);
+    padding:13px 24px;
+    display:flex; gap:18px; align-items:center;
+    overflow-x:auto; white-space:nowrap;
+  }
+  .topnav .brand{font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink); font-size:0.84rem; flex-shrink:0;}
+  .topnav .links{display:flex; gap:14px; font-size:0.78rem;}
+  .topnav .links a{color:var(--ink-dim); font-family:'IBM Plex Mono',monospace;}
+  .topnav .links a:hover{color:var(--teal);}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px;}
+
+  .hero{padding:52px 24px 34px; text-align:center; border-bottom:1px solid var(--rule);}
+  .hero .eyebrow{font-family:'IBM Plex Mono',monospace; font-size:0.7rem; letter-spacing:0.16em; text-transform:uppercase; color:var(--amber); margin-bottom:14px;}
+  .hero h1{font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:clamp(1.5rem,4vw,2.2rem); margin:0 0 12px; color:var(--ink); line-height:1.25;}
+  .hero p.sub{color:var(--ink-dim); max-width:540px; margin:0 auto 28px; font-size:0.97rem;}
+
+  .pipeline{
+    display:flex; align-items:center; justify-content:center;
+    gap:0; flex-wrap:wrap; margin:24px auto 0; max-width:700px;
+  }
+  .pipe-node{
+    background:var(--panel); border:1px solid var(--rule-strong); border-radius:7px;
+    padding:10px 16px; text-align:center;
+  }
+  .pipe-node .label{font-family:'IBM Plex Mono',monospace; font-size:0.72rem; font-weight:700; color:var(--amber);}
+  .pipe-node .sub{font-size:0.72rem; color:var(--ink-faint); margin-top:2px;}
+  .pipe-arrow{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); font-size:1.1rem; padding:0 8px;}
+
+  .roadmap{padding:40px 24px; border-bottom:1px solid var(--rule);}
+  .roadmap h2{margin-top:0; font-family:'IBM Plex Mono',monospace; font-size:1.1rem; color:var(--ink);}
+  .blocks{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:9px; margin-top:18px;}
+  .block-card{background:var(--panel); border:1px solid var(--rule); border-radius:7px; padding:12px 13px 14px;}
+  .block-card .ch{font-family:'IBM Plex Mono',monospace; color:var(--amber); font-size:0.7rem; font-weight:700;}
+  .block-card .num{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); font-size:0.68rem;}
+  .block-card .ti{font-weight:600; margin-top:3px; font-size:0.88rem; color:var(--ink);}
+  .block-card .de{color:var(--ink-faint); font-size:0.74rem; margin-top:2px;}
+
+  section.sec{padding:46px 24px; border-bottom:1px solid var(--rule);}
+  section.sec:last-of-type{border-bottom:none;}
+  .sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:5px;}
+  .sec-head .idx{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); font-size:0.88rem;}
+  .sec h2{font-family:'IBM Plex Mono',monospace; font-size:1.28rem; margin:0; color:var(--ink);}
+  .sec .lede{color:var(--ink-dim); margin-top:5px; margin-bottom:24px; font-size:0.94rem;}
+  .sec h3{font-size:0.99rem; margin:26px 0 9px; color:var(--ink);}
+  .sec p{color:var(--ink-dim); margin:0 0 14px;}
+
+  table.t{width:100%; border-collapse:collapse; margin:14px 0; font-size:0.87rem;}
+  table.t th, table.t td{border:1px solid var(--rule-strong); padding:8px 11px; text-align:left;}
+  table.t th{background:var(--panel-2); font-family:'IBM Plex Mono',monospace; font-weight:600; color:var(--ink);}
+  table.t td{color:var(--ink-dim);}
+
+  pre{
+    background:var(--code-bg); border:1px solid var(--rule-strong); border-radius:7px;
+    padding:14px 16px; overflow-x:auto; font-size:0.81rem; line-height:1.55;
+    font-family:'IBM Plex Mono',monospace; color:var(--ink); break-inside:avoid;
+  }
+  pre .c1{color:var(--purple); font-weight:600;}
+  pre .c2{color:var(--teal); font-weight:600;}
+  pre .c3{color:var(--coral); font-weight:600;}
+  pre .c4{color:var(--amber); font-weight:600;}
+  pre .dim{color:var(--ink-faint);}
+  code{font-family:'IBM Plex Mono',monospace; background:rgba(0,0,0,0.06); padding:2px 5px; border-radius:4px; font-size:0.87em; color:var(--ink);}
+
+  .callout{
+    border-left:3px solid var(--amber); background:var(--amber-soft);
+    padding:12px 16px; border-radius:0 7px 7px 0; margin:16px 0; font-size:0.89rem; color:var(--ink-dim);
+    break-inside:avoid;
+  }
+  .callout strong{color:var(--ink);}
+
+  .qa{margin-bottom:20px; background:var(--panel); border:1px solid var(--rule); border-radius:8px; overflow:hidden; break-inside:avoid;}
+  .qa .q{padding:13px 17px; background:var(--panel-2); font-weight:600; font-size:0.9rem; display:flex; gap:11px; align-items:flex-start; color:var(--ink);}
+  .qa .q .tag{font-family:'IBM Plex Mono',monospace; color:var(--amber); flex-shrink:0; font-size:0.8rem;}
+  .qa .a{padding:14px 17px; font-size:0.88rem; color:var(--ink-dim);}
+  .qa .a p{margin:0 0 10px;}
+  .qa .a p:last-child{margin-bottom:0;}
+  .qa .a code{color:var(--teal);}
+
+  .stack-wrap{background:var(--code-bg); border:1px solid var(--rule-strong); border-radius:8px; padding:20px 16px 20px 0; overflow-x:auto; margin:20px 0; break-inside:avoid;}
+  .frame{display:flex; align-items:flex-start; font-family:'IBM Plex Mono',monospace; font-size:0.78rem; white-space:nowrap; padding:2.5px 0;}
+  .frame .depth{width:28px; text-align:right; color:var(--ink-faint); flex-shrink:0; padding-right:9px; font-size:0.71rem;}
+  .frame .rail{flex-shrink:0; display:flex;}
+  .frame .seg{width:16px; border-right:1px solid var(--rule-strong); flex-shrink:0;}
+  .frame .seg.active{border-right:1px solid var(--amber);}
+  .frame .body{padding-left:9px; color:var(--ink);}
+  .frame.base .body{color:var(--amber); font-weight:700;}
+  .frame .ret{color:var(--ink-faint); font-style:italic;}
+  .frame .dim{color:var(--ink-faint);}
+  .frame .fn-e{color:var(--purple); font-weight:600;}
+  .frame .fn-v{color:var(--teal); font-weight:600;}
+  .frame .fn-x{color:var(--coral); font-weight:600;}
+
+  .env-diagram{display:flex; gap:24px; flex-wrap:wrap; margin:20px 0; align-items:flex-start;}
+  .env-box{background:var(--panel); border:1px solid var(--rule-strong); border-radius:8px; padding:14px 16px; min-width:190px; break-inside:avoid;}
+  .env-box .env-title{font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:0.78rem; color:var(--amber); margin-bottom:8px;}
+  .env-box .env-row{font-family:'IBM Plex Mono',monospace; font-size:0.76rem; color:var(--ink-dim); padding:3px 0; border-bottom:1px solid var(--rule);}
+  .env-box .env-row:last-child{border-bottom:none;}
+  .env-box .env-enc{font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:var(--ink-faint); margin-top:8px; padding-top:6px; border-top:1px dashed var(--rule-strong);}
+  .env-arrow{font-family:'IBM Plex Mono',monospace; color:var(--ink-faint); font-size:1.4rem; align-self:center;}
+
+  .corpus{background:var(--code-bg); border:1px solid var(--rule-strong); border-radius:7px; padding:13px 15px; font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--ink-dim); white-space:pre-wrap; line-height:1.55; margin:10px 0 24px; break-inside:avoid;}
+  .corpus-title{font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--amber); font-size:0.82rem; margin-top:24px;}
+
+  .type-pill{font-family:'IBM Plex Mono',monospace; font-size:0.74rem; padding:2px 7px; border-radius:4px; font-weight:600;}
+  .pill-p{background:var(--purple-soft); color:var(--purple);}
+  .pill-t{background:var(--teal-soft); color:var(--teal);}
+  .pill-c{background:var(--coral-soft); color:var(--coral);}
+  .pill-a{background:var(--amber-soft); color:var(--amber);}
+  .pill-g{background:var(--gray-soft); color:var(--gray);}
+
+  footer{padding:38px 24px 52px; text-align:center; color:var(--ink-faint); font-size:0.83rem;}
+
+  @media print{
+    .topnav{display:none;}
+    body{font-size:10.5pt;}
+    section.sec, .roadmap{padding:24px 0;}
+    .wrap{padding:0;}
+    @page{margin:0.65in;}
+  }
+  @media (max-width:600px){
+    .hero{padding:40px 16px 26px;}
+    section.sec{padding:34px 16px;}
+    .frame{font-size:0.7rem;}
+    .frame .seg{width:12px;}
+    .pipeline{flex-direction:column; gap:4px;}
+    .pipe-arrow{transform:rotate(90deg);}
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <span class="brand">jlox · ch.7–8</span>
+  <div class="links">
+    <a href="#ch7-values">runtime values</a>
+    <a href="#ch7-eval">evaluation</a>
+    <a href="#ch7-unary">unary</a>
+    <a href="#ch7-binary">binary</a>
+    <a href="#ch7-trace">eval trace</a>
+    <a href="#ch8-stmt">statements</a>
+    <a href="#ch8-env">environment</a>
+    <a href="#ch8-scope">scope</a>
+    <a href="#ch8-trace">full trace</a>
+    <a href="#qa">deep dive</a>
+    <a href="#corpus">corpus</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="eyebrow">Crafting Interpreters · Chapters 7 & 8</div>
+  <h1>Evaluating Expressions<br>+ Statements & State</h1>
+  <p class="sub">From tree-walking arithmetic to a stateful interpreter with variables, scope, and environment chains — every mechanism traced end to end.</p>
+
+  <div class="pipeline">
+    <div class="pipe-node"><div class="label">Scanner</div><div class="sub">List&lt;Token&gt;</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node"><div class="label">Parser</div><div class="sub">List&lt;Stmt&gt;</div></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-node"><div class="label">Interpreter</div><div class="sub">effects + values</div></div>
+    <div class="pipe-arrow">↕</div>
+    <div class="pipe-node"><div class="label">Environment</div><div class="sub">var → value chain</div></div>
+  </div>
+</header>
+
+<section class="roadmap wrap">
+  <h2>Blocks across both chapters</h2>
+  <div class="blocks">
+    <div class="block-card"><div class="ch">Ch.7</div><div class="num">B1</div><div class="ti">Runtime values</div><div class="de">Object, type map, literal vs value</div></div>
+    <div class="block-card"><div class="ch">Ch.7</div><div class="num">B2</div><div class="ti">evaluate() + Literal/Grouping</div><div class="de">base case, pass-through</div></div>
+    <div class="block-card"><div class="ch">Ch.7</div><div class="num">B3</div><div class="ti">visitUnaryExpr</div><div class="de">truthiness, dynamic casting</div></div>
+    <div class="block-card"><div class="ch">Ch.7</div><div class="num">B4</div><div class="ti">visitBinaryExpr</div><div class="de">arithmetic, + overload, isEqual</div></div>
+    <div class="block-card"><div class="ch">Ch.7</div><div class="num">B5</div><div class="ti">RuntimeError + wiring</div><div class="de">stringify, interpret(), Lox.java</div></div>
+    <div class="block-card"><div class="ch">Ch.8</div><div class="num">B1</div><div class="ti">Stmt hierarchy</div><div class="de">Expression, Print via GenerateAst</div></div>
+    <div class="block-card"><div class="ch">Ch.8</div><div class="num">B2</div><div class="ti">Parsing statements</div><div class="de">declaration(), statement(), synchronize()</div></div>
+    <div class="block-card"><div class="ch">Ch.8</div><div class="num">B3</div><div class="ti">Environment</div><div class="de">define/get/assign, String keys</div></div>
+    <div class="block-card"><div class="ch">Ch.8</div><div class="num">B4</div><div class="ti">Interpreting stmts + var</div><div class="de">execute(), visitVarStmt, visitVariableExpr</div></div>
+    <div class="block-card"><div class="ch">Ch.8</div><div class="num">B5</div><div class="ti">Scope + blocks</div><div class="de">parent chain, executeBlock, finally</div></div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ CH.7 ═══════════════════════════════ -->
+
+<section class="sec wrap" id="ch7-values">
+  <div class="sec-head"><span class="idx">Ch.7 · B1</span><h2>Runtime Values — the type bridge</h2></div>
+  <p class="lede">Lox is dynamically typed; Java is statically typed. The bridge is <code>java.lang.Object</code>.</p>
+
+  <table class="t">
+    <tr><th>Lox type</th><th>Java representation</th><th>Why</th></tr>
+    <tr><td>any value</td><td><code>Object</code></td><td>Common supertype of everything in Java</td></tr>
+    <tr><td><code>nil</code></td><td><code>null</code></td><td>Java's null reference</td></tr>
+    <tr><td><code>true</code>/<code>false</code></td><td><code>Boolean</code></td><td>Boxed primitive</td></tr>
+    <tr><td>number</td><td><code>Double</code></td><td>ALL Lox numbers — no int/float split</td></tr>
+    <tr><td>string</td><td><code>String</code></td><td>Direct Java String</td></tr>
+  </table>
+
+  <h3>The literal → value chain (one conversion, three phases)</h3>
+  <pre><span class="dim">SOURCE TEXT:  "123.45"</span>
+      │
+      ▼  SCANNER — Double.parseDouble("123.45") → Double(123.45)
+      │            ← THE ONE AND ONLY CONVERSION MOMENT
+      ▼
+Token.literal = Double(123.45)       [Object field, final]
+      │
+      ▼  PARSER — previous().literal → reads Double off the token
+      │
+Expr.Literal.value = Double(123.45)  [Object field, final]
+      │
+      ▼  INTERPRETER — return expr.value
+      │
+Double(123.45)  ← same object, zero re-conversion</pre>
+
+  <div class="callout"><strong>Key insight:</strong> The same Java object travels the entire pipeline. Java passes object references, not copies — <code>Token.literal</code>, <code>Expr.Literal.value</code>, and the Interpreter's return value are all pointing at the <em>same</em> <code>Double</code> in memory.</div>
+
+  <h3>Literal vs Value — a real distinction</h3>
+  <p>A <strong>literal</strong> is syntax that appears in source code (<code>123</code>, <code>"hello"</code>, <code>true</code>). A <strong>value</strong> is a runtime entity produced by evaluation. <code>1 + 2</code> produces the value <code>3</code>, but <code>3</code> is never a literal anywhere in that source. <code>Expr.Literal</code> exists for literals only.</p>
+</section>
+
+<section class="sec wrap" id="ch7-eval">
+  <div class="sec-head"><span class="idx">Ch.7 · B2</span><h2>evaluate() + Literal + Grouping</h2></div>
+  <p class="lede">The recursive engine and the two simplest visit methods.</p>
+
+  <pre><span class="dim">// The engine — threads `this` down every accept() call</span>
+<span class="c1">private</span> Object evaluate(Expr expr) {
+  <span class="c1">return</span> expr.accept(<span class="c4">this</span>);
+}
+
+<span class="c1">@Override</span>
+<span class="c1">public</span> Object visitLiteralExpr(Expr.Literal expr) {
+  <span class="c1">return</span> expr.value;   <span class="dim">// base case — already converted by Scanner</span>
+}
+
+<span class="c1">@Override</span>
+<span class="c1">public</span> Object visitGroupingExpr(Expr.Grouping expr) {
+  <span class="c1">return</span> evaluate(expr.expression);   <span class="dim">// pass-through, no computation</span>
+}</pre>
+
+  <table class="t">
+    <tr><th>AstPrinter had</th><th>Interpreter has</th></tr>
+    <tr><td><code>print(Expr)</code> — entry point</td><td><code>interpret(List&lt;Stmt&gt;)</code> — entry point</td></tr>
+    <tr><td><code>parenthesize()</code> — recurses via accept()</td><td><code>evaluate()</code> — recurses via accept()</td></tr>
+    <tr><td>Carries <code>String</code> up the chain</td><td>Carries <code>Object</code> value up the chain</td></tr>
+    <tr><td>Base case returns <code>.toString()</code></td><td>Base case returns <code>expr.value</code></td></tr>
+  </table>
+
+  <p>Same mutual recursion: <code>evaluate() → accept() → visit*Expr() → evaluate() → ...</code> Bottoms out at <code>visitLiteralExpr</code> — the one visit method that never calls <code>evaluate()</code> again.</p>
+</section>
+
+<section class="sec wrap" id="ch7-unary">
+  <div class="sec-head"><span class="idx">Ch.7 · B3</span><h2>visitUnaryExpr + Truthiness</h2></div>
+  <p class="lede">The first visit method that does real work — introduces dynamic type casting and Lox's truthiness rule.</p>
+
+  <pre><span class="c1">@Override</span>
+<span class="c1">public</span> Object visitUnaryExpr(Expr.Unary expr) {
+  Object right = evaluate(expr.right);   <span class="dim">// children FIRST — post-order forced</span>
+
+  <span class="c1">switch</span> (expr.operator.type) {
+    <span class="c1">case</span> BANG:  <span class="c1">return</span> !isTruthy(right);
+    <span class="c1">case</span> MINUS: <span class="c1">return</span> -(double)right;   <span class="dim">// Java cast — dynamic typing in one line</span>
+  }
+  <span class="c1">return null</span>;   <span class="dim">// unreachable</span>
+}
+
+<span class="c1">private boolean</span> isTruthy(Object object) {
+  <span class="c1">if</span> (object == <span class="c4">null</span>) <span class="c1">return false</span>;            <span class="dim">// nil is falsy</span>
+  <span class="c1">if</span> (object <span class="c1">instanceof</span> Boolean) <span class="c1">return</span> (boolean)object;  <span class="dim">// respect actual value</span>
+  <span class="c1">return true</span>;                                 <span class="dim">// everything else is truthy</span>
+}</pre>
+
+  <h3>Lox's truthiness — Ruby's rule</h3>
+  <table class="t">
+    <tr><th>Value</th><th>Truthiness in Lox</th><th>Contrast</th></tr>
+    <tr><td><code>nil</code></td><td>FALSY</td><td>same as most languages</td></tr>
+    <tr><td><code>false</code></td><td>FALSY</td><td>same as most languages</td></tr>
+    <tr><td><code>0</code></td><td><strong>TRUTHY</strong></td><td>JS/Python make this falsy</td></tr>
+    <tr><td><code>""</code></td><td><strong>TRUTHY</strong></td><td>JS/Python make this falsy</td></tr>
+    <tr><td>any number/string</td><td>TRUTHY</td><td>—</td></tr>
+  </table>
+
+  <div class="callout"><strong>The cast <code>(double)right</code> is dynamic typing made visible.</strong> In a statically-typed language the compiler would verify <code>right</code> is a number before this code runs. In Lox, this check happens at runtime, every time this line executes. <code>checkNumberOperand()</code> wraps this to produce a clean Lox error instead of a raw Java <code>ClassCastException</code>.</div>
+
+  <p><strong>Order in <code>isTruthy()</code> matters</strong>: the <code>instanceof Boolean</code> check must come before <code>return true</code> — otherwise <code>Boolean(false)</code> would incorrectly return <code>true</code> (it's non-null).</p>
+</section>
+
+<section class="sec wrap" id="ch7-binary">
+  <div class="sec-head"><span class="idx">Ch.7 · B4–5</span><h2>visitBinaryExpr + RuntimeError</h2></div>
+  <p class="lede">The biggest visit method — four categories of operators, one special case, and the first Lox-specific error type.</p>
+
+  <h3>Both operands always evaluated first — a semantic choice</h3>
+  <pre><span class="c1">public</span> Object visitBinaryExpr(Expr.Binary expr) {
+  Object left  = evaluate(expr.left);   <span class="dim">// BOTH before the switch</span>
+  Object right = evaluate(expr.right);  <span class="dim">// even if a type error follows</span>
+  <span class="c1">switch</span> (expr.operator.type) { ... }
+}</pre>
+
+  <div class="callout"><strong>This is a language semantics decision, not just implementation detail.</strong> <code>say("left") - say("right")</code> prints both "left" and "right" before erroring on the subtraction. We could check <code>left</code>'s type first and skip evaluating <code>right</code> — but we chose not to.</div>
+
+  <h3>Four operator categories</h3>
+  <table class="t">
+    <tr><th>Category</th><th>Operators</th><th>Input → Output</th><th>Type check</th></tr>
+    <tr><td>Arithmetic</td><td><code>- / *</code></td><td>Double → Double</td><td><code>checkNumberOperands()</code></td></tr>
+    <tr><td>PLUS (special)</td><td><code>+</code></td><td>Double+Double OR String+String</td><td>Own <code>instanceof</code> check</td></tr>
+    <tr><td>Comparison</td><td><code>&gt; &gt;= &lt; &lt;=</code></td><td>Double → Boolean</td><td><code>checkNumberOperands()</code></td></tr>
+    <tr><td>Equality</td><td><code>== !=</code></td><td>any → Boolean</td><td>none — any types allowed</td></tr>
+  </table>
+
+  <h3>Why + is special</h3>
+  <pre><span class="c1">case</span> PLUS:
+  <span class="c1">if</span> (left <span class="c1">instanceof</span> Double && right <span class="c1">instanceof</span> Double)
+    <span class="c1">return</span> (double)left + (double)right;
+  <span class="c1">if</span> (left <span class="c1">instanceof</span> String && right <span class="c1">instanceof</span> String)
+    <span class="c1">return</span> (String)left + (String)right;
+  <span class="c1">throw new</span> RuntimeError(expr.operator,
+      <span class="c2">"Operands must be two numbers or two strings."</span>);</pre>
+  <p>Every other binary operator blindly casts to <code>double</code>. <code>+</code> has two valid type combinations — it needs <code>instanceof</code> to decide at runtime which kind of <code>+</code> this is. Mixing types (<code>"hi" + 1</code>) is a <code>RuntimeError</code> — Lox deliberately rejects implicit coercion.</p>
+
+  <h3>isEqual() — why not Java's ==</h3>
+  <pre><span class="c1">private boolean</span> isEqual(Object a, Object b) {
+  <span class="c1">if</span> (a == <span class="c4">null</span> && b == <span class="c4">null</span>) <span class="c1">return true</span>;   <span class="dim">// nil == nil</span>
+  <span class="c1">if</span> (a == <span class="c4">null</span>) <span class="c1">return false</span>;              <span class="dim">// nil != anything</span>
+  <span class="c1">return</span> a.equals(b);                         <span class="dim">// value equality, not reference</span>
+}</pre>
+  <p>Java's <code>==</code> compares references (<code>new Double(1.0) == new Double(1.0)</code> is <code>false</code>). <code>.equals()</code> compares values. Guard against <code>null.equals()</code> → <code>NullPointerException</code> with the explicit null checks first.</p>
+
+  <h3>RuntimeError — hiding the JVM from Lox users</h3>
+  <pre><span class="c1">class</span> RuntimeError <span class="c1">extends</span> RuntimeException {
+  <span class="c1">final</span> Token token;   <span class="dim">// which operator caused it — for line reporting</span>
+  RuntimeError(Token token, String message) {
+    super(message);
+    <span class="c4">this</span>.token = token;
+  }
+}</pre>
+  <p>Raw Java <code>ClassCastException</code> would expose implementation details. <code>RuntimeError</code> wraps the offending token so we can report <code>[line 3] Operand must be a number.</code> — a Lox error, not a Java stack trace. Same exception-as-stack-unwinder principle as <code>ParseError</code>.</p>
+
+  <h3>stringify() — trimming the .0</h3>
+  <pre><span class="c1">private</span> String stringify(Object object) {
+  <span class="c1">if</span> (object == <span class="c4">null</span>) <span class="c1">return</span> <span class="c2">"nil"</span>;
+  <span class="c1">if</span> (object <span class="c1">instanceof</span> Double) {
+    String text = object.toString();
+    <span class="c1">if</span> (text.endsWith(<span class="c2">".0"</span>)) text = text.substring(0, text.length() - 2);
+    <span class="c1">return</span> text;   <span class="dim">// 123.0 → "123", 123.4 → "123.4"</span>
+  }
+  <span class="c1">return</span> object.toString();
+}</pre>
+</section>
+
+<section class="sec wrap" id="ch7-trace">
+  <div class="sec-head"><span class="idx">Ch.7 · trace</span><h2>Evaluation Trace: <code>2 * 3 + 4</code></h2></div>
+  <p class="lede">Full call stack — every frame, tracked by depth, for the expression that produces <code>10</code>.</p>
+
+  <div class="stack-wrap">
+    <div class="frame" style="padding-left:8px;"><span class="depth">0</span><span class="body">interpret(): <span class="fn-x">execute</span>(Stmt.Expression) → <span class="fn-e">evaluate</span>(Binary-Plus)</span></div>
+    <div class="frame"><span class="depth">1</span><span class="rail"><span class="seg active"></span></span><span class="body"><span class="fn-e">evaluate</span>(Binary-Plus) → Binary-Plus.accept(this)</span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-v">visitBinaryExpr</span>(Binary-Plus)</span></div>
+    <div class="frame"><span class="depth">3</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">left = <span class="fn-e">evaluate</span>(Binary-Multiply)</span></div>
+    <div class="frame"><span class="depth">4</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body"><span class="fn-v">visitBinaryExpr</span>(Binary-Multiply)</span></div>
+    <div class="frame"><span class="depth">5</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">left = <span class="fn-e">evaluate</span>(Literal-2)</span></div>
+    <div class="frame base"><span class="depth">6</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">visitLiteralExpr(Literal-2) <span class="ret">→ Double(2.0)  (base case)</span></span></div>
+    <div class="frame"><span class="depth">5</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">right = <span class="fn-e">evaluate</span>(Literal-3)</span></div>
+    <div class="frame base"><span class="depth">6</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">visitLiteralExpr(Literal-3) <span class="ret">→ Double(3.0)  (base case)</span></span></div>
+    <div class="frame"><span class="depth">4</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">switch STAR: (double)2.0 * (double)3.0 <span class="ret">→ Double(6.0)</span></span></div>
+    <div class="frame"><span class="depth">3</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">left = Double(6.0) ✓  now right = <span class="fn-e">evaluate</span>(Literal-4)</span></div>
+    <div class="frame base"><span class="depth">4</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">visitLiteralExpr(Literal-4) <span class="ret">→ Double(4.0)  (base case)</span></span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body">switch PLUS: instanceof ✓ → 6.0 + 4.0 <span class="ret">→ Double(10.0)</span></span></div>
+    <div class="frame"><span class="depth">0</span><span class="body dim" style="padding-left:8px;">↑ stringify(10.0) → "10.0" endsWith ".0" → trim → "10" → println("10")</span></div>
+  </div>
+
+  <p><strong>Left fully resolves before right starts</strong> — depth 3's <code>left = evaluate(...)</code> descends all the way to depth 6 and back before <code>right = evaluate(...)</code> is even called. Sequencing is enforced by ordinary Java statement order. <strong>Dispatch into Binary-Multiply</strong> at depth 3 happens because <code>expr.left</code> IS <code>Binary-Multiply</code> — a direct Java reference set by the Parser at tree construction time.</p>
+</section>
+
+<!-- ═══════════════════════════════ CH.8 ═══════════════════════════════ -->
+
+<section class="sec wrap" id="ch8-stmt">
+  <div class="sec-head"><span class="idx">Ch.8 · B1–2</span><h2>Statements — the second syntax tree</h2></div>
+  <p class="lede">Expressions compute values. Statements produce effects. Two separate hierarchies, enforced by the Java type system.</p>
+
+  <h3>The fundamental split</h3>
+  <table class="t">
+    <tr><th></th><th>Expr</th><th>Stmt</th></tr>
+    <tr><td>Produces</td><td>a value</td><td>an effect</td></tr>
+    <tr><td>Visitor type</td><td><code>Visitor&lt;Object&gt;</code></td><td><code>Visitor&lt;Void&gt;</code></td></tr>
+    <tr><td>Visit returns</td><td>the computed value</td><td><code>null</code> always</td></tr>
+    <tr><td>Interpreter method</td><td><code>evaluate(Expr)</code></td><td><code>execute(Stmt)</code></td></tr>
+    <tr><td>Parser returns</td><td>single <code>Expr</code> (Ch.6)</td><td><code>List&lt;Stmt&gt;</code> (Ch.8)</td></tr>
+  </table>
+
+  <div class="callout"><strong>Why <code>Void</code> (capital V)?</strong> Java's generics can't use lowercase <code>void</code> as a type argument due to type erasure. <code>Void</code> is a boxed placeholder — every statement visit method satisfies it by returning <code>null</code>. Weird, but harmless.</div>
+
+  <h3>The new grammar</h3>
+  <pre><span class="dim">program   →</span> statement* EOF ;
+<span class="dim">statement →</span> exprStmt | printStmt | varDecl | block ;
+<span class="dim">exprStmt  →</span> expression ";" ;
+<span class="dim">printStmt →</span> "print" expression ";" ;
+<span class="dim">varDecl   →</span> "var" IDENTIFIER ( "=" expression )? ";" ;
+<span class="dim">block     →</span> "{" declaration* "}" ;</pre>
+
+  <h3>Parser call chain — two levels of looping</h3>
+  <pre><span class="dim">// OUTER LOOP — flat, iterative, one statement per iteration</span>
+List&lt;Stmt&gt; parse() {
+  List&lt;Stmt&gt; statements = <span class="c1">new</span> ArrayList<>();
+  <span class="c1">while</span> (!isAtEnd()) {
+    statements.add(declaration());   <span class="dim">// synchronize() lives here</span>
+  }
+  <span class="c1">return</span> statements;
+}
+
+<span class="dim">// INNER RECURSION — fires once per statement, builds the Expr subtree</span>
+<span class="c1">private</span> Stmt declaration() {
+  <span class="c1">try</span> {
+    <span class="c1">if</span> (match(VAR)) <span class="c1">return</span> varDeclaration();
+    <span class="c1">return</span> statement();
+  } <span class="c1">catch</span> (ParseError error) {
+    synchronize();
+    <span class="c1">return null</span>;
+  }
+}</pre>
+
+  <p><strong>Outer loop = program-level sequencer</strong> (flat, iterative, processes one statement per iteration). <strong>Inner recursion = expression-level parser</strong> (recursive descent, builds the <code>Expr</code> subtree inside each statement). These operate at completely different grammar levels.</p>
+
+  <h3>execute() — statement equivalent of evaluate()</h3>
+  <pre><span class="c1">private void</span> execute(Stmt stmt) {
+  stmt.accept(<span class="c4">this</span>);   <span class="dim">// same dispatch as evaluate(), different type</span>
+}</pre>
+
+  <pre><span class="c1">@Override</span>
+<span class="c1">public</span> Void visitExpressionStmt(Stmt.Expression stmt) {
+  evaluate(stmt.expression);   <span class="dim">// evaluate for side effects, DISCARD value</span>
+  <span class="c1">return null</span>;
+}
+
+<span class="c1">@Override</span>
+<span class="c1">public</span> Void visitPrintStmt(Stmt.Print stmt) {
+  Object value = evaluate(stmt.expression);
+  System.out.println(stringify(value));
+  <span class="c1">return null</span>;
+}</pre>
+</section>
+
+<section class="sec wrap" id="ch8-env">
+  <div class="sec-head"><span class="idx">Ch.8 · B3–4</span><h2>Environment — the variable table</h2></div>
+  <p class="lede">A map from variable names to runtime values. The first persistent state in jlox.</p>
+
+  <pre><span class="c1">class</span> Environment {
+  <span class="c1">final</span> Environment enclosing;                      <span class="dim">// parent chain (Block 5)</span>
+  <span class="c1">private final</span> Map&lt;String, Object&gt; values = <span class="c1">new</span> HashMap<>();
+
+  <span class="dim">// Three operations:</span>
+  <span class="c1">void</span> define(String name, Object value) {
+    values.put(name, value);   <span class="dim">// no existing-key check → redefinition allowed</span>
+  }
+
+  Object get(Token name) {
+    <span class="c1">if</span> (values.containsKey(name.lexeme)) <span class="c1">return</span> values.get(name.lexeme);
+    <span class="c1">if</span> (enclosing != <span class="c4">null</span>) <span class="c1">return</span> enclosing.get(name);  <span class="dim">// walk chain</span>
+    <span class="c1">throw new</span> RuntimeError(name, <span class="c2">"Undefined variable."</span>);
+  }
+
+  <span class="c1">void</span> assign(Token name, Object value) {
+    <span class="c1">if</span> (values.containsKey(name.lexeme)) { values.put(name.lexeme, value); <span class="c1">return</span>; }
+    <span class="c1">if</span> (enclosing != <span class="c4">null</span>) { enclosing.assign(name, value); <span class="c1">return</span>; }
+    <span class="c1">throw new</span> RuntimeError(name, <span class="c2">"Undefined variable."</span>);
+  }
+}</pre>
+
+  <table class="t">
+    <tr><th>Operation</th><th>Requires prior existence?</th><th>Used for</th></tr>
+    <tr><td><code>define()</code></td><td>NO — creates or overwrites</td><td><code>var x = 10;</code> declarations</td></tr>
+    <tr><td><code>get()</code></td><td>YES — error if missing</td><td>reading a variable (<code>x + 5</code>)</td></tr>
+    <tr><td><code>assign()</code></td><td>YES — error if missing</td><td><code>x = 20;</code> reassignment</td></tr>
+  </table>
+
+  <div class="callout"><strong>Keys are bare Strings, not Tokens.</strong> Two tokens at different source locations with the same name (<code>x</code> on line 1, <code>x</code> on line 5) must hit the same map entry. Raw string keys guarantee this — tokens carry position information we don't need for lookup.</div>
+
+  <div class="callout"><strong>Undefined variable = runtime error (not parse-time).</strong> Mutual recursion requires referring to functions before they're declared. Static detection would make <code>isOdd()</code> calling <code>isEven()</code> a parse error, even though it's perfectly valid code. Tradeoff: accept runtime detection to allow mutual recursion.</div>
+
+  <h3>New AST nodes — Stmt.Var and Expr.Variable</h3>
+  <pre><span class="dim">// Declaration: "var x = 10;"</span>
+Stmt.Var { Token name; Expr initializer; }
+  visitVarStmt:
+    value = (initializer != null) ? evaluate(initializer) : null
+    environment.define(stmt.name.lexeme, value)   <span class="dim">// var x; → stores nil</span>
+
+<span class="dim">// Use: "x + 5"</span>
+Expr.Variable { Token name; }
+  visitVariableExpr:
+    return environment.get(expr.name)             <span class="dim">// undefined → RuntimeError</span></pre>
+</section>
+
+<section class="sec wrap" id="ch8-scope">
+  <div class="sec-head"><span class="idx">Ch.8 · B5</span><h2>Scope — the Environment parent chain</h2></div>
+  <p class="lede">Each block creates a new Environment pointing at its enclosing one. Variables are found by walking the chain inward to outward.</p>
+
+  <h3>executeBlock — the mechanism</h3>
+  <pre><span class="c1">void</span> executeBlock(List&lt;Stmt&gt; statements, Environment environment) {
+  Environment previous = <span class="c4">this</span>.environment;    <span class="dim">// save current scope</span>
+  <span class="c1">try</span> {
+    <span class="c4">this</span>.environment = environment;           <span class="dim">// switch to inner scope</span>
+    <span class="c1">for</span> (Stmt statement : statements) {
+      execute(statement);
+    }
+  } <span class="c1">finally</span> {
+    <span class="c4">this</span>.environment = previous;             <span class="dim">// ALWAYS restore — even on error</span>
+  }
+}</pre>
+
+  <div class="callout"><strong>Why <code>finally</code> is critical:</strong> Without it, a <code>RuntimeError</code> thrown mid-block would skip the restore line, permanently leaving the Interpreter stuck in the inner scope. <code>finally</code> guarantees restoration regardless of how the block exits — normal completion, exception, or anything else.</div>
+
+  <h3>Chain lookup — how variables find their scope</h3>
+  <pre><span class="dim">get() / assign() both walk the chain:</span>
+  check this.values → not found?
+    check enclosing.values → not found?
+      check enclosing.enclosing.values → ...
+        until enclosing == null → RuntimeError</pre>
+
+  <p>Innermost scope checked first — this is how <strong>shadowing</strong> works. A variable declared in the inner scope is found before the chain walk reaches the outer scope. The outer variable is untouched, just hidden.</p>
+
+  <h3>Environment state for <code>var a = "global"; { var a = "block"; print a; } print a;</code></h3>
+
+  <div class="env-diagram">
+    <div class="env-box">
+      <div class="env-title">GLOBAL ENVIRONMENT</div>
+      <div class="env-row">"a" → "global"</div>
+      <div class="env-enc">enclosing: null (chain ends)</div>
+    </div>
+    <div class="env-arrow">←</div>
+    <div class="env-box">
+      <div class="env-title">INNER (block scope)</div>
+      <div class="env-row">"a" → "block"</div>
+      <div class="env-enc">enclosing: → GLOBAL</div>
+    </div>
+  </div>
+
+  <p>While inside the block: <code>this.environment</code> points at INNER. <code>get("a")</code> finds <code>"block"</code> immediately. After the block: <code>finally</code> restores <code>this.environment</code> to GLOBAL. <code>get("a")</code> finds <code>"global"</code>. The inner <code>"a"</code> never touched the outer <code>"a"</code> — two separate map entries, two separate objects.</p>
+</section>
+
+<section class="sec wrap" id="ch8-trace">
+  <div class="sec-head"><span class="idx">Ch.8 · full trace</span><h2>End-to-End Trace: the Scope Program</h2></div>
+  <p class="lede">Scanner → Parser → Interpreter → Environment, for <code>var a = "global"; { var a = "block"; print a; } print a;</code></p>
+
+  <h3>Phase 1: Scanner output (selected)</h3>
+  <pre>VAR "var" null · IDENTIFIER "a" null · EQUAL "=" null · STRING "global" "global" · SEMICOLON
+LEFT_BRACE · VAR · IDENTIFIER "a" · EQUAL · STRING "block" "block" · SEMICOLON
+PRINT · IDENTIFIER "a" · SEMICOLON · RIGHT_BRACE
+PRINT · IDENTIFIER "a" · SEMICOLON · EOF</pre>
+
+  <h3>Phase 2: Parser — List&lt;Stmt&gt; produced</h3>
+  <pre>[0] Stmt.Var        name:"a"  initializer:Expr.Literal("global")
+
+[1] Stmt.Block
+      [0] Stmt.Var  name:"a"  initializer:Expr.Literal("block")
+      [1] Stmt.Print expression:Expr.Variable("a")
+
+[2] Stmt.Print       expression:Expr.Variable("a")</pre>
+
+  <h3>Phase 3: Interpreter execution</h3>
+  <div class="stack-wrap">
+    <div class="frame" style="padding-left:8px;"><span class="depth">·</span><span class="body dim">GLOBAL ENV: { } (empty at start)</span></div>
+    <div class="frame" style="padding-left:8px;"><span class="depth">·</span><span class="body">execute(Stmt.Var[0]) → visitVarStmt → evaluate(Literal("global")) → "global"</span></div>
+    <div class="frame" style="padding-left:8px;"><span class="depth">·</span><span class="body dim">GLOBAL ENV: { "a" → "global" }</span></div>
+    <div class="frame" style="padding-left:8px;"><span class="depth">·</span><span class="body">execute(Stmt.Block[1]) → visitBlockStmt</span></div>
+    <div class="frame"><span class="depth">1</span><span class="rail"><span class="seg active"></span></span><span class="body">executeBlock(stmts, <span class="fn-e">new Environment(global)</span>)</span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body dim">previous = GLOBAL; this.environment = INNER</span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body">execute(Stmt.Var) → define("a","block") into INNER</span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body dim">INNER ENV: { "a" → "block" } enclosing→GLOBAL</span></div>
+    <div class="frame"><span class="depth">2</span><span class="rail"><span class="seg"></span><span class="seg active"></span></span><span class="body">execute(Stmt.Print) → evaluate(Variable("a"))</span></div>
+    <div class="frame"><span class="depth">3</span><span class="rail"><span class="seg"></span><span class="seg"></span><span class="seg active"></span></span><span class="body">environment.get("a") → INNER.containsKey? YES → "block"</span></div>
+    <div class="frame base"><span class="depth">·</span><span class="rail"><span class="seg"></span></span><span class="body">println("block") ← PRINTS "block"</span></div>
+    <div class="frame"><span class="depth">1</span><span class="rail"><span class="seg active"></span></span><span class="body dim">finally: this.environment = previous (GLOBAL restored)</span></div>
+    <div class="frame" style="padding-left:8px;"><span class="depth">·</span><span class="body">execute(Stmt.Print[2]) → evaluate(Variable("a"))</span></div>
+    <div class="frame"><span class="depth">1</span><span class="rail"><span class="seg active"></span></span><span class="body">environment.get("a") → GLOBAL.containsKey? YES → "global"</span></div>
+    <div class="frame base"><span class="depth">·</span><span class="body">println("global") ← PRINTS "global"</span></div>
+  </div>
+</section>
+
+<section class="sec wrap" id="qa">
+  <div class="sec-head"><span class="idx">deep dive</span><h2>The Questions That Actually Mattered</h2></div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·1</span> How is the value in <code>Expr.Literal</code> linked to what the Scanner produced?</div>
+    <div class="a">
+      <p>The Scanner converts the raw text (<code>"123.45"</code>) to a real Java <code>Double</code> via <code>Double.parseDouble()</code> — the one and only conversion moment. That <code>Double</code> is stored in <code>Token.literal</code>. The Parser reads it back via <code>previous().literal</code> inside <code>primary()</code> and passes it into <code>new Expr.Literal(...)</code>, where it sits in <code>Expr.Literal.value</code>. The Interpreter reads that field in <code>visitLiteralExpr</code> and returns it. Same object, three containers, zero re-conversions.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·2</span> How does <code>previous()</code> retrieve the right token in <code>primary()</code>?</div>
+    <div class="a">
+      <p><code>match(NUMBER, STRING)</code> internally calls <code>advance()</code>, which increments <code>current</code> and moves the cursor past the token. By the time you're inside the <code>if</code> block, <code>current</code> has already moved forward. <code>previous()</code> reads <code>tokens.get(current - 1)</code> — exactly the token that was just consumed. This is why <code>previous()</code> exists at all: <code>match()</code> returns only a boolean, not which token matched. <code>previous()</code> retrieves the consumed token after the fact.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·3</span> How did we end up in <code>visitBinaryExpr</code> for Binary-Multiply when we called evaluate on Binary-Plus?</div>
+    <div class="a">
+      <p>No routing logic anywhere — pure object references. <code>Binary-Plus.left</code> IS <code>Binary-Multiply</code>, a direct Java reference set at construction time by the Parser. When <code>visitBinaryExpr(Binary-Plus)</code> calls <code>evaluate(expr.left)</code>, it's literally <code>evaluate(Binary-Multiply)</code>. The JVM follows <code>Binary-Multiply</code>'s hidden class reference, finds <code>Expr.Binary</code>'s <code>accept()</code> override, which calls <code>visitBinaryExpr(Binary-Multiply)</code>. No decision made — just following a reference that was set months ago (in Parser time).</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·4</span> What is the mental map now that the Parser returns <code>List&lt;Stmt&gt;</code>?</div>
+    <div class="a">
+      <p>Not "one tree" and not "a list of tokens" — a <strong>list of small trees</strong>, one per statement. Each <code>Stmt</code> node is the root of its own <code>Expr</code> subtree. The outer <code>while</code> loop in <code>parse()</code> sequences statements (flat, iterative). Each call to <code>declaration()</code> triggers the full recursive-descent expression parser to build one complete <code>Expr</code> subtree. The Interpreter processes each <code>Stmt</code> independently in order — they're separate units of execution, not connected by the tree itself.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·5</span> Why does the same operator token appearing twice in source code not collide in the environment?</div>
+    <div class="a">
+      <p>Variable names are stored as bare strings, not tokens. <code>values.put("a", ...)</code> — the string <code>"a"</code> is the key. Two different token objects both holding <code>lexeme = "a"</code> hit the exact same map entry. The token's line number and source position are completely irrelevant to the lookup. This is an intentional design choice: logically, both uses of <code>a</code> refer to the same variable, regardless of where in the source they appear.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·6</span> In the scope trace, how does the <code>print a</code> inside the block find <code>"block"</code> and not <code>"global"</code>?</div>
+    <div class="a">
+      <p>At the moment <code>print a</code> executes, <code>this.environment</code> points at INNER (switched there by <code>executeBlock</code>'s assignment before the loop). <code>visitVariableExpr</code> calls <code>environment.get(Token("a"))</code> on whichever environment <code>this.environment</code> currently points at — which is INNER. INNER's <code>values</code> map contains <code>"a" → "block"</code>, so it returns immediately without ever walking up to GLOBAL. The chain lookup only proceeds to the parent if <code>containsKey</code> returns false in the current environment.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·7</span> What is the difference between <code>define()</code> and <code>assign()</code>?</div>
+    <div class="a">
+      <p><code>define()</code> creates a new binding regardless of whether the name already exists — it's called for <code>var x = 10;</code> declarations. <code>assign()</code> requires the variable to already exist somewhere in the environment chain, and throws a <code>RuntimeError</code> if it doesn't — it's called for <code>x = 20;</code> reassignments. The distinction enforces Lox's requirement for explicit <code>var</code> declarations: you can't silently create a new global variable just by writing <code>x = 10</code> without a preceding <code>var x</code>.</p>
+    </div>
+  </div>
+
+  <div class="qa">
+    <div class="q"><span class="tag">Q·8</span> Is the evaluation recursion a new kind compared to AstPrinter?</div>
+    <div class="a">
+      <p>No — identical mutual recursion, different cargo. <code>evaluate() → accept() → visit*Expr() → evaluate()</code> is structurally identical to <code>parenthesize() → accept() → visit*Expr() → parenthesize()</code>. Same base case (visitLiteralExpr returns immediately with no further recursive call), same post-order completion (parent can't finish until children have returned). The only difference is what travels up the chain: AstPrinter carries String fragments; Interpreter carries Object runtime values.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sec wrap" id="corpus">
+  <div class="sec-head"><span class="idx">appendix</span><h2>Notebook Corpus — Chapters 7 & 8</h2></div>
+
+  <div class="corpus-title">Ch.7 · B1 — Runtime Values</div>
+  <div class="corpus">TYPE BRIDGE: Lox dynamically typed, Java statically typed.
+Bridge: java.lang.Object — common supertype of everything.
+  nil → null, Boolean → Boolean, number → Double, string → String
+instanceof: runtime type check — "if (value instanceof Double)"
+  this is dynamic typing made concrete, happening at runtime per evaluation.
+
+LITERAL vs VALUE:
+  literal = syntax in source ("123", "hello") — Parser's domain
+  value   = runtime entity (Double(123.0))   — Interpreter's domain
+  Conversion: Scanner's Double.parseDouble() — ONCE, never again.
+  Same object travels: Token.literal → Expr.Literal.value → returned Object</div>
+
+  <div class="corpus-title">Ch.7 · B2 — evaluate() + Base Cases</div>
+  <div class="corpus">evaluate(Expr expr) -> expr.accept(this)
+  Same mutual recursion as AstPrinter's parenthesize().
+  evaluate() : parenthesize() = thread `this` through accept() chain.
+
+visitLiteralExpr  -> return expr.value   (BASE CASE, no sub-calls)
+visitGroupingExpr -> return evaluate(expr.expression)   (pass-through)
+
+AstPrinter → Interpreter:
+  Visitor&lt;String&gt; → Visitor&lt;Object&gt;
+  parenthesize()  → evaluate()
+  return "text"   → return runtime value</div>
+
+  <div class="corpus-title">Ch.7 · B3 — Unary + Truthiness</div>
+  <div class="corpus">visitUnaryExpr: evaluate right FIRST (post-order forced by sequential code)
+  BANG:  !isTruthy(right)
+  MINUS: -(double)right   ← Java cast = dynamic type check at runtime
+
+isTruthy: Lox follows Ruby's rule (simplest possible):
+  null (nil)  → false
+  instanceof Boolean → (boolean)object   ← ORDER MATTERS: before return true
+  else → true   (0, "", any number/string = TRUTHY)
+
+checkNumberOperand: produce clean RuntimeError not raw ClassCastException.</div>
+
+  <div class="corpus-title">Ch.7 · B4 — Binary Operators</div>
+  <div class="corpus">Both operands evaluated BEFORE switch — semantic choice, not accident.
+  (say("left") - say("right") prints both before erroring)
+
+FOUR CATEGORIES:
+  Arithmetic (-,/,*): Double → Double. checkNumberOperands().
+  PLUS (special): overloaded — Double+Double OR String+String
+    uses instanceof to pick — can't blindly cast. Mixed types = RuntimeError.
+  Comparison (>,>=,<,<=): Double → Boolean (output type DIFFERS from input)
+  Equality (==,!=): any types. isEqual() helper.
+
+isEqual: null guards first (avoid NPE), then a.equals(b) not ==
+  Java == compares references. equals() compares values.
+  NaN edge case: Double.equals(NaN, NaN) = true — breaks IEEE 754.
+
+RuntimeError: carries Token (for line reporting). Hides JVM from user.
+stringify(): "10.0".endsWith(".0") → trim to "10". nil → "nil".</div>
+
+  <div class="corpus-title">Ch.8 · B1–2 — Statements</div>
+  <div class="corpus">EXPRESSIONS vs STATEMENTS:
+  expression → returns value. statement → produces effect, returns Void.
+  Separate hierarchies: Expr.Visitor&lt;Object&gt; vs Stmt.Visitor&lt;Void&gt;
+  Void (capital V): Java can't use lowercase void as generic arg.
+  All visit methods return null to satisfy it.
+
+PARSER SHIFT: parse() now returns List&lt;Stmt&gt; (was single Expr)
+  = a LIST OF SMALL TREES, one Stmt per statement, each rooting an Expr subtree.
+
+TWO LOOP LEVELS:
+  OUTER: while (!isAtEnd()) declaration()  — flat, iterates statements
+  INNER: expression() recursive descent    — builds Expr subtree per statement
+
+declaration(): try { var? varDeclaration() : statement() }
+               catch(ParseError) { synchronize(); return null; }
+  ← synchronize() FINALLY USED HERE (was written Ch.6, unused until now)
+
+execute(Stmt) -> stmt.accept(this)   [same as evaluate() for Expr]
+visitExpressionStmt: evaluate(), DISCARD value, return null.
+visitPrintStmt: evaluate() → stringify() → println(), return null.</div>
+
+  <div class="corpus-title">Ch.8 · B3 — Environment</div>
+  <div class="corpus">Map&lt;String, Object&gt; values — name → runtime value.
+Keys = bare Strings (not Tokens): same name, different source lines → same entry.
+
+THREE OPERATIONS:
+  define(String, Object): put() no existing-key check. Allows redefinition.
+    WHY: REPL consistency. Also needed for mutual recursion.
+  get(Token): containsKey? return. enclosing? recurse. else RuntimeError.
+    WHY RUNTIME not static: mutual recursion needs forward references.
+    Takes Token (not String) so error reports source line.
+  assign(Token, Object): REQUIRES prior existence. Creates nothing new.
+    var x = 10 → define(). x = 20 → assign(). Distinct operations.
+
+NEW AST NODES:
+  Stmt.Var:      Token name, Expr initializer (null if no = value)
+  Expr.Variable: Token name — wraps name token for variable USE</div>
+
+  <div class="corpus-title">Ch.8 · B5 — Scope + Block Statements</div>
+  <div class="corpus">ENVIRONMENT PARENT CHAIN:
+  final Environment enclosing — points to outer scope.
+  Environment():          enclosing = null  (global, chain ends)
+  Environment(enclosing): enclosing = outer (local, points up)
+
+  get()/assign() WALK THE CHAIN recursively until found or null → error.
+  Innermost found first = SHADOWING. Outer var untouched, just hidden.
+
+BLOCK PARSING:
+  statement(): match(LEFT_BRACE) → new Stmt.Block(block())
+  block(): collect declaration()s until RIGHT_BRACE or isAtEnd()
+           isAtEnd() check: prevents infinite loop on missing '}'
+           returns raw List&lt;Stmt&gt; (NOT Stmt.Block — reused for fn bodies later)
+
+executeBlock(stmts, newEnv):
+  previous = this.environment
+  try { this.environment = newEnv; execute each stmt; }
+  finally { this.environment = previous; }  ← ALWAYS, even on RuntimeError
+
+WHY finally: RuntimeError mid-block must not permanently corrupt the
+  outer scope. finally guarantees restoration regardless of exit path.
+
+ONE LINE creates a new scope:
+  executeBlock(stmt.statements, new Environment(environment))
+  new Environment(environment) sets enclosing = current → chain established.</div>
+</section>
+
+<footer>
+  <p>Chapters 7–8 complete. The interpreter now evaluates expressions and manages stateful variables with lexical scope.</p>
+  <p>Next: <span class="mono">Chapter 9 — Control Flow</span> (<code>if</code>, <code>while</code>, <code>for</code> — conditional jumps and loop desugaring).</p>
+</footer>
+
+</body>
+</html>

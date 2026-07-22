@@ -48,6 +48,12 @@ class AstPrinter implements Expr.Visitor<String> {
 
     }
 
+    @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return "(" + expr.operator.lexeme + " " + print(expr.left)
+                + " " + print(expr.right) + ")";
+    }
+
     public static void main(String[] args) {
         Expr expression = new Expr.Binary(
                 new Expr.Unary(

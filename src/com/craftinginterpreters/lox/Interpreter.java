@@ -15,6 +15,36 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+
+    public Object visitLogicalExpr(Expr.Logical expr) {
+
+        Object left = evaluate(expr.left);
+
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left))
+                return left; // OR ko lagi short circuting check gareko(OR ma left TRUE vayo vane ANSWER is
+                             // TRUE, right check garnu parena, and return TRUE)
+        } else {
+            if (!isTruthy(left))
+                return left; // (AND ko lagi short circuiting check. (AND ma left FALSE vayo vane, ANSWER is
+                             // FALSE, right check garnu pardaina))
+        }
+
+        return evaluate(expr.right); // Yedi Short Circut le vetena vane, (OR ra AND ko lagi RIGHT is deciding)
+    }
+
+    @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
+    @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
     }
