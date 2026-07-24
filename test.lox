@@ -1,16 +1,9 @@
-if (true) print "yes";
-if (false) print "no"; else print "correct";
-var x = 5;
-if (x > 3) print "big"; else print "small";
+var i = 0;
+while (i < 3) {
+  print i;
+  i = i + 1;
+}
 
-print "yes" or "no";
-print nil or "fallback";
-print false and "never";
-print true and "reached";
-
-var x = nil;
-if (x != nil and x == "hello") {
-  print "safe";
-} else {
-  print "guarded";
+for (var i = 0; i < 10; i = i + 1) {
+  print i;
 }

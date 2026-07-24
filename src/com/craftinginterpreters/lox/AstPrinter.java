@@ -48,10 +48,20 @@ class AstPrinter implements Expr.Visitor<String> {
 
     }
 
+    // @Override
+    // public String visitWhileStmt(Stmt.While stmt) {
+    // return "(while " + print(stmt.condition) + ")";
+    // }
+
     @Override
     public String visitLogicalExpr(Expr.Logical expr) {
         return "(" + expr.operator.lexeme + " " + print(expr.left)
                 + " " + print(expr.right) + ")";
+    }
+
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return "(= " + expr.name.lexeme + " " + print(expr.value) + ")";
     }
 
     public static void main(String[] args) {
